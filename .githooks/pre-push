@@ -1,0 +1,28 @@
+#!/bin/sh
+# Git pre-push hook - 防止意外强制推送到 main 分支
+# 安装方式: cp .githooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+
+while read local_ref local_sha remote_ref remote_sha
+do
+    case "$remote_ref" in
+        refs/heads/main|refs/heads/master)
+            # 检测从空仓库推送（新 git init 的仓库没有历史）
+            if ! git rev-parse --verify HEAD > /dev/null 2>&1; then
+                echo ""
+                echo "============================================"
+                echo "  危险操作拦截！"
+                echo "============================================"
+                echo "  你正在从一个全新的 Git 仓库强制推送到"
+                echo "  main 分支！这将删除远程仓库中所有文件！"
+                echo ""
+                echo "  如果确实要这样做，请使用:"
+                echo "    git push origin main --no-verify"
+                echo "============================================"
+                echo ""
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+exit 0
